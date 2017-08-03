@@ -1,0 +1,67 @@
+<%
+   bookmark ||= nil # nieje to cely objekt zalozky, len true alebo false ci je vytvorena zalozka alebo nie
+   article_detail = document.find_article_detail(current_user)
+   title = document.title.present? ? document.title : document.url
+   authors = article_detail.andand.authors_string
+   top_tags = document.top_tags
+   bookmark_count = document.bookmark_count
+   favorite ||= bookmark.andand.favorite
+   summary = document.summary
+   keywords = document.keywords.map(&:name)
+
+   title = title.length > 50 ? "#{title.first(50)}..." : title
+%>
+
+<tr id="document_<%= document.id %>" data-id="<%= document.id %>">
+    <td>
+      <div class="row-fluid">
+        <div class="document_title">
+          <%= link_to_proxied_result(document, @search_log.id) %>
+          <% if document.is_article? and article_detail.present? %>
+              <% if document.is_pdf? %>
+                  <% article_url = article_detail.document.andand.url %>
+                  <%= link_to "(Article)", article_url if article_url %>
+              <% else %>
+                  <% pdf_url = document.pdf.andand.url %>
+                  <%= link_to "(Pdf)", pdf_url if pdf_url %>
+              <% end %>
+          <% end %>
+        </div>
+        <div class="document_authors"><%= authors %></div>
+        <div class="document_top_tags tags hint">
+          <% if top_tags.present? %>
+              <i class="icon-tags"></i>
+              <% top_tags.each do |tag| %>
+                  <% tags = params[:tags].present? ? params[:tags].split(",") << tag : [tag] %>
+                  <% tags.uniq! %>
+                  <%= link_to tag, params.merge({:tags => tags.join(",")}), "data-tag" => tag, :remote => true, :class => "tag hint" %>
+              <% end %>
+          <% end %>
+        </div>
+
+        <% if keywords.any? %>
+          <div id='keywords-hint' class='hint'>
+            <%= icon_tag('book') %>
+
+            <% keywords.each do |keyword| %>
+              <%= link_to keyword, "#", :'data-value' => keyword, class: 'hint' %>
+            <% end %>
+          </div>
+        <% end %>
+
+
+        <div class="result document_summary"><%= summary %></div>
+        <div class="document_actions">
+          <%= render :partial => 'search/favorite_document', :locals => { :document => document, :favorite => favorite} %>
+          <%= render :partial => 'search/bookmark_document', :locals => { :document => document, :bookmark => bookmark} %>
+          <%= render :partial => 'search/read_later_document', :locals => { :document => document, :bookmark => bookmark} %>
+          <%= render :partial => 'search/share_document', :locals => { :document => document, :bookmark => bookmark} %>
+          <span class="bookmarks_count">
+            <% if bookmark_count > 0 %>
+            <%= I18n.t("bookmarks", :count => bookmark_count) %>
+            <% end %>
+          </span>
+        </div>
+      </div>
+    </td>
+</tr></tr>
